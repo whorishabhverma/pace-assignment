@@ -73,7 +73,14 @@ func main() {
     r.GET("/game/:gameId", handleGame)
     r.GET("/ws/:gameId", handleWebSocket)
     
-    r.Run(":8080")
+    
+
+	port := os.Getenv("PORT")
+    if port == "" {
+        port = "8080"
+    }
+    r.Run(":" + port)
+
 }
 
 func handleGame(c *gin.Context) {
