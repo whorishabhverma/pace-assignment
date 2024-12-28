@@ -34,11 +34,29 @@ var (
     }
 )
 
+// Helper function to broadcast game state to all players
+func broadcastGameState(game *GameState, messageType string) {
+    for symbol, conn := range game.Players {
+        err := conn.WriteJSON(gin.H{
+            "type":          messageType,
+            "board":         game.Board,
+            "currentPlayer": game.CurrentPlayer,
+            "gameOver":      game.GameOver,
+            "winner":        game.Winner,
+            "symbol":        symbol,
+            "playersReady":  game.PlayersReady,
+        })
+        if err != nil {
+            log.Printf("Error broadcasting to player %s: %v", symbol, err)
+        }
+    }
+}
+
 func checkWinner(board [9]string) string {
     winCombos := [][3]int{
-        {0, 1, 2}, {3, 4, 5}, {6, 7, 8}, // Rows
-        {0, 3, 6}, {1, 4, 7}, {2, 5, 8}, // Columns
-        {0, 4, 8}, {2, 4, 6},            // Diagonals
+        {0, 1, 2}, {3, 4, 5}, {6, 7, 8},
+        {0, 3, 6}, {1, 4, 7}, {2, 5, 8},
+        {0, 4, 8}, {2, 4, 6},
     }
 
     for _, combo := range winCombos {
@@ -59,7 +77,6 @@ func checkWinner(board [9]string) string {
     if isDraw {
         return "draw"
     }
-
     return ""
 }
 
@@ -80,7 +97,6 @@ func handleGame(c *gin.Context) {
 func handleWebSocket(c *gin.Context) {
     gameId := c.Param("gameId")
 
-    // Configure WebSocket connection with timeout
     conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
     if err != nil {
         log.Printf("Failed to upgrade connection: %v", err)
@@ -88,9 +104,10 @@ func handleWebSocket(c *gin.Context) {
     }
     defer conn.Close()
 
-    // Set read/write deadlines
-    conn.SetReadDeadline(time.Now().Add(60 * time.Second))
-    conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
+    // Set ping handler
+    conn.SetPingHandler(func(string) error {
+        return conn.WriteControl(websocket.PongMessage, []byte{}, time.Now().Add(time.Second))
+    })
 
     gamesLock.Lock()
     game, exists := games[gameId]
@@ -111,16 +128,10 @@ func handleWebSocket(c *gin.Context) {
     game.PlayersReady++
     gamesLock.Unlock()
 
-    // Send initial game state
-    conn.WriteJSON(gin.H{
-        "type":          "init",
-        "symbol":        playerSymbol,
-        "board":         game.Board,
-        "currentPlayer": game.CurrentPlayer,
-        "playersReady":  game.PlayersReady,
-        "gameOver":      game.GameOver,
-        "winner":        game.Winner,
-    })
+    // Broadcast initial state to all players
+    game.Mutex.Lock()
+    broadcastGameState(game, "init")
+    game.Mutex.Unlock()
 
     // Keep-alive handler
     go func() {
@@ -137,7 +148,6 @@ func handleWebSocket(c *gin.Context) {
         }
     }()
 
-    // Main game loop
     for {
         var message struct {
             Type     string `json:"type"`
@@ -165,47 +175,25 @@ func handleWebSocket(c *gin.Context) {
                     game.GameOver = true
                     game.Winner = winner
                 } else {
-                    if playerSymbol == "O" {
+                    if game.CurrentPlayer == "O" {
                         game.CurrentPlayer = "X"
                     } else {
                         game.CurrentPlayer = "O"
                     }
                 }
 
-                // Broadcast updated state with error handling
-                for _, playerConn := range game.Players {
-                    err := playerConn.WriteJSON(gin.H{
-                        "type":          "update",
-                        "board":         game.Board,
-                        "currentPlayer": game.CurrentPlayer,
-                        "gameOver":      game.GameOver,
-                        "winner":        game.Winner,
-                    })
-                    if err != nil {
-                        log.Printf("Error broadcasting state: %v", err)
-                    }
-                }
+                // Broadcast the updated state immediately
+                broadcastGameState(game, "update")
             }
         } else if message.Type == "restart" && game.GameOver {
             resetGame(game)
-            for _, playerConn := range game.Players {
-                err := playerConn.WriteJSON(gin.H{
-                    "type":          "update",
-                    "board":         game.Board,
-                    "currentPlayer": game.CurrentPlayer,
-                    "gameOver":      game.GameOver,
-                    "winner":        game.Winner,
-                })
-                if err != nil {
-                    log.Printf("Error broadcasting reset: %v", err)
-                }
-            }
+            broadcastGameState(game, "update")
         }
 
         game.Mutex.Unlock()
     }
 
-    // Clean up when player disconnects
+    // Cleanup on disconnect
     game.Mutex.Lock()
     delete(game.Players, playerSymbol)
     game.PlayersReady--
@@ -218,7 +206,6 @@ func handleWebSocket(c *gin.Context) {
 }
 
 func main() {
-    // Set Gin mode based on environment
     ginMode := os.Getenv("GIN_MODE")
     if ginMode != "" {
         gin.SetMode(ginMode)
@@ -226,7 +213,6 @@ func main() {
 
     r := gin.Default()
 
-    // Enhanced CORS middleware for Render
     r.Use(func(c *gin.Context) {
         c.Writer.Header().Set("Access-Control-Allow-Origin", "*")
         c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
@@ -242,11 +228,9 @@ func main() {
         c.Next()
     })
 
-    // Serve static files
     r.Static("/static", "./static")
     r.LoadHTMLGlob("templates/*")
 
-    // Routes
     r.GET("/", func(c *gin.Context) {
         c.HTML(http.StatusOK, "index.html", nil)
     })
@@ -254,13 +238,11 @@ func main() {
     r.GET("/game/:gameId", handleGame)
     r.GET("/ws/:gameId", handleWebSocket)
 
-    // Get port from environment variable
     port := os.Getenv("PORT")
     if port == "" {
-        port = "10000" // Render default port
+        port = "10000"
     }
 
-    // Start server with improved logging
     log.Printf("Server starting on port %s", port)
     if err := r.Run(":" + port); err != nil {
         log.Fatal("Failed to start server: ", err)
