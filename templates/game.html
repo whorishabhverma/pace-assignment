@@ -1,0 +1,148 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tic Tac Toe - Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/static/css/game.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Tic Tac Toe Game</h1>
+        <div class="game-link">
+            <div>Share this game with your opponent:</div>
+            <div class="copy-link">
+                <div class="game-url" id="gameUrl"></div>
+                <button class="copy-button" onclick="copyGameLink()">Copy Link</button>
+            </div>
+        </div>
+        <div id="status">Waiting for players...</div>
+        <div class="board" id="board">
+            <div class="cell" onclick="makeMove(0)"></div>
+            <div class="cell" onclick="makeMove(1)"></div>
+            <div class="cell" onclick="makeMove(2)"></div>
+            <div class="cell" onclick="makeMove(3)"></div>
+            <div class="cell" onclick="makeMove(4)"></div>
+            <div class="cell" onclick="makeMove(5)"></div>
+            <div class="cell" onclick="makeMove(6)"></div>
+            <div class="cell" onclick="makeMove(7)"></div>
+            <div class="cell" onclick="makeMove(8)"></div>
+        </div>
+        <div id="winnerDisplay" class="winner"></div>
+        <button id="restartButton" onclick="restartGame()">Play Again</button>
+    </div>
+    <div id="toast" class="toast">Link copied to clipboard!</div>
+
+    <script>
+        let socket;
+        let playerSymbol;
+        let currentPlayer;
+        let gameOver = false;
+        
+        // Display game URL
+        document.getElementById('gameUrl').textContent = window.location.href;
+        
+        function copyGameLink() {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                showToast();
+            });
+        }
+
+        function showToast() {
+            const toast = document.getElementById('toast');
+            toast.style.display = 'block';
+            setTimeout(() => {
+                toast.style.display = 'none';
+            }, 2000);
+        }
+        
+        function connect() {
+            const gameId = window.location.pathname.split('/').pop();
+            socket = new WebSocket(`ws://${window.location.host}/ws/${gameId}`);
+            
+            socket.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                
+                if (data.type === 'init') {
+                    playerSymbol = data.symbol;
+                    currentPlayer = data.currentPlayer;
+                    gameOver = data.gameOver;
+                    updateBoard(data.board);
+                    updateGameState(data);
+                    
+                    if (data.playersReady === 2) {
+                        updateStatus();
+                    }
+                } else if (data.type === 'update') {
+                    currentPlayer = data.currentPlayer;
+                    gameOver = data.gameOver;
+                    updateBoard(data.board);
+                    updateGameState(data);
+                }
+            };
+
+            socket.onerror = function(error) {
+                console.error('WebSocket Error:', error);
+            };
+
+            socket.onclose = function() {
+                console.log('WebSocket Connection Closed');
+                // Optionally implement reconnection logic here
+            };
+        }
+        
+        function updateBoard(board) {
+            const cells = document.getElementsByClassName('cell');
+            for (let i = 0; i < cells.length; i++) {
+                cells[i].textContent = board[i] || '';
+                cells[i].className = 'cell' + (gameOver ? ' disabled' : '');
+            }
+        }
+        
+        function updateStatus() {
+            const statusElement = document.getElementById('status');
+            if (gameOver) {
+                statusElement.textContent = 'Game Over';
+            } else {
+                statusElement.textContent = `You are Player ${playerSymbol}. ${currentPlayer}'s turn`;
+            }
+        }
+        
+        function updateGameState(data) {
+            const winnerDisplay = document.getElementById('winnerDisplay');
+            const restartButton = document.getElementById('restartButton');
+            
+            if (data.gameOver) {
+                if (data.winner === 'draw') {
+                    winnerDisplay.textContent = "It's a Draw!";
+                } else {
+                    winnerDisplay.textContent = `Player ${data.winner} Wins!`;
+                }
+                restartButton.style.display = 'block';
+            } else {
+                winnerDisplay.textContent = '';
+                restartButton.style.display = 'none';
+            }
+            
+            updateStatus();
+        }
+        
+        function makeMove(position) {
+            if (!gameOver && currentPlayer === playerSymbol) {
+                socket.send(JSON.stringify({
+                    type: 'move',
+                    position: position
+                }));
+            }
+        }
+        
+        function restartGame() {
+            socket.send(JSON.stringify({
+                type: 'restart'
+            }));
+        }
+        
+        connect();
+    </script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Arial', sans-serif;
+}
+
+body {
+    background-color: #f0f2f5;
+    min-height: 100vh;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.container {
+    max-width: 600px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+h1 {
+    color: #1a237e;
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 2rem;
+}
+
+.game-link {
+    background-color: #ffffff;
+    border-radius: 10px;
+    padding: 15px;
+    margin: 20px 0;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    width: 100%;
+}
+
+.copy-link {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.game-url {
+    flex: 1;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+    border: 1px solid #dee2e6;
+    word-break: break-all;
+}
+
+.copy-button {
+    padding: 10px 20px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.copy-button:hover {
+    background-color: #45a049;
+}
+
+#status {
+    text-align: center;
+    font-size: 1.2rem;
+    margin: 15px 0;
+    color: #333;
+    padding: 10px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.board {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    max-width: 400px;
+    width: 100%;
+    margin: 20px auto;
+    background-color: #1a237e;
+    padding: 10px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.cell {
+    aspect-ratio: 1;
+    background-color: white;
+    border: none;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: min(10vw, 40px);
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    color: #1a237e;
+}
+
+.cell:hover:not(.disabled) {
+    transform: scale(0.95);
+    background-color: #e3f2fd;
+}
+
+.cell.disabled {
+    cursor: not-allowed;
+    opacity: 0.8;
+}
+
+.winner {
+    text-align: center;
+    font-size: 1.5rem;
+    margin: 20px 0;
+    color: #2e7d32;
+    font-weight: bold;
+}
+
+#restartButton {
+    padding: 12px 30px;
+    font-size: 1.1rem;
+    background-color: #1a237e;
+    color: white;
+    border: none;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: none;
+    margin: 20px auto;
+}
+
+#restartButton:hover {
+    background-color: #283593;
+    transform: scale(1.05);
+}
+
+/* Toast notification style */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #333;
+    color: white;
+    padding: 12px 24px;
+    border-radius: 25px;
+    display: none;
+    animation: fadeInOut 2s ease;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translate(-50%, 20px); }
+    20% { opacity: 1; transform: translate(-50%, 0); }
+    80% { opacity: 1; transform: translate(-50%, 0); }
+    100% { opacity: 0; transform: translate(-50%, -20px); }
+}
+
+/* Responsive design */
+@media (max-width: 480px) {
+    body {
+        padding: 10px;
+    }
+
+    h1 {
+        font-size: 1.5rem;
+    }
+
+    .game-link {
+        padding: 10px;
+    }
+
+    .copy-link {
+        flex-direction: column;
+    }
+
+    .copy-button {
+        width: 100%;
+    }
+}

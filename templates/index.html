@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Tic Tac Toe - Home</title>
+</head>
+<body>
+    <h1>Tic Tac Toe</h1>
+    <button onclick="createGame()">Create New Game</button>
+    
+    <script>
+        function createGame() {
+            const gameId = Math.random().toString(36).substring(7);
+            window.location.href = `/game/${gameId}`;
+        }
+    </script>
+</body>
+</html>
