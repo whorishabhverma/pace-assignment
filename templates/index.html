@@ -4,12 +4,86 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tic Tac Toe - Home</title>
-    <!-- Link the external CSS file -->
+    <!-- External CSS for styles -->
     <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+        .container {
+            text-align: center;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            width: 90%;
+            max-width: 500px;
+        }
+
+        h1 {
+            font-size: 2rem;
+            color: #333;
+            margin-bottom: 20px;
+        }
+
+        button {
+            background-color: #4CAF50;
+            color: white;
+            font-size: 1rem;
+            padding: 15px 30px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        /* GIF Styling */
+        .tenor-gif-embed {
+            margin: 20px 0;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            button {
+                padding: 12px 25px;
+                font-size: 0.9rem;
+            }
+
+            .container {
+                width: 100%;
+                padding: 15px;
+            }
+        }
+    </style>
 </head>
 <body>
     <div class="container">
         <h1>Tic Tac Toe</h1>
+        
+        <!-- Embed the GIF from Tenor -->
+        <div class="tenor-gif-embed" data-postid="16377430" data-share-method="host" data-aspect-ratio="1.13074" data-width="100%">
+            <a href="https://tenor.com/view/tic-tac-toe-kyper-hip-hop-old-skool-80s-music-gif-16377430">Tic Tac Toe Kyper GIF</a> from <a href="https://tenor.com/search/tic+tac+toe-gifs">Tic Tac Toe GIFs</a>
+        </div>
+        <script type="text/javascript" async src="https://tenor.com/embed.js"></script>
+
+        <!-- Game Button -->
         <button onclick="createGame()">Create New Game</button>
     </div>
 
