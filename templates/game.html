@@ -1,4 +1,4 @@
-
+<!-- templates/game.html -->
 <!DOCTYPE html>
 <html>
 <head>
@@ -57,9 +57,16 @@
         }
         
         function connect() {
+
             const gameId = window.location.pathname.split('/').pop();
-            socket = new WebSocket(`ws://${window.location.host}/ws/${gameId}`);
-            
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsUrl = `${protocol}//${window.location.host}/ws/${gameId}`;
+    socket = new WebSocket(wsUrl);
+
+
+
+
+                
             socket.onmessage = function(event) {
                 const data = JSON.parse(event.data);
                 
